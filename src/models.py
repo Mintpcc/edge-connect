@@ -27,6 +27,7 @@ class BaseModel(nn.Module):
                 data = torch.load(self.gen_weights_path)
             else: 
                 data = torch.load(self.gen_weights_path, map_location=lambda storage, loc: storage)
+
             self.generator.load_state_dict(data['generator'])
             self.iteration = data['iteration']
 
@@ -47,6 +48,7 @@ class BaseModel(nn.Module):
             'iteration': self.iteration,
             'generator': self.generator.state_dict()
         }, self.gen_weights_path)
+
         torch.save({
             'discriminator': self.discriminator.state_dict()
         }, self.dis_weights_path)

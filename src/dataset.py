@@ -56,6 +56,9 @@ class Dataset(torch.utils.data.Dataset):
         
         # load image
         img = imread(self.data[index])
+        # gray to rgb
+        if len(img.shape) < 3:
+            img = gray2rgb(img)
         
         # resize/crop if needed
         if size != 0:
@@ -135,6 +138,7 @@ class Dataset(torch.utils.data.Dataset):
         if mask_type == 3:
             mask_index = random.randint(0, len(self.mask_data) - 1)
             mask = imread(self.mask_data[mask_index])
+
             mask = self.mask_crop(mask, imgh, imgw)
             mask = rgb2gray(mask)
             mask = (mask > 0).astype(np.uint8) * 255       # threshold due to interpolation

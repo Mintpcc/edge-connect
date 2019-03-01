@@ -109,7 +109,7 @@ def load_config(mode=None):
     # test mode
     elif mode == 2:
         config.MODE = 2
-        config.MODEL = args.model if args.model is not None else 2
+        config.MODEL = args.model if args.model is not None else 3
         config.INPUT_SIZE = 0
 
         if args.input is not None:
