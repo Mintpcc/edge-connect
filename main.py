@@ -10,7 +10,7 @@ from src.edge_connect import EdgeConnect
 
 
 def main(mode=None):
-    r"""starts the model
+    """starts the model
 
     Args:
         mode (int): 1: train, 2: test, 3: eval, reads from config file if not specified
@@ -79,6 +79,7 @@ def load_config(mode=None):
     
     # test mode
     if mode == 2:
+
         parser.add_argument('--input', default='./in.png',
                             type=str, help='path to the input images directory or an input image')
         parser.add_argument('--mask', default='./mask.png',
