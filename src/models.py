@@ -142,13 +142,13 @@ class EdgeModel(BaseModel):
         outputs = self.generator(inputs)                                    # in: [grayscale(1) + edge(1) + mask(1)]
         return outputs
 
-    def backward(self, gen_loss = None, dis_loss=None):
+    def backward(self, gen_loss = None, dis_loss=None, retain_graph=None):
         if dis_loss is not None:
             dis_loss.backward()
         self.dis_optimizer.step()
 
         if gen_loss is not None:
-            gen_loss.backward()
+            gen_loss.backward(retain_graph=retain_graph)
         self.gen_optimizer.step()
 
 
@@ -255,7 +255,7 @@ class InpaintingModel(BaseModel):
         return outputs
 
     def backward(self, gen_loss=None, dis_loss=None, retain_graph=None):
-        dis_loss.backward(retain_graph=retain_graph)
+        dis_loss.backward()
         self.dis_optimizer.step()
 
         gen_loss.backward(retain_graph=retain_graph)
