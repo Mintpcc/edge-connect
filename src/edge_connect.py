@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from .dataset import Dataset
 from .models import EdgeModel, InpaintingModel
 from .utils import Progbar, create_dir, stitch_images, imsave
-from .metrics import PSNR, EdgeAccuracy
+from .metrics import PSNR, EdgeAccuracy, COV
 import torch
 from tensorboardX import SummaryWriter
 
@@ -30,6 +30,7 @@ class EdgeConnect():
 
         self.psnr = PSNR(255.0).to(config.DEVICE)
         self.edgeacc = EdgeAccuracy(config.EDGE_THRESHOLD).to(config.DEVICE)
+        self.cov = COV(config.EDGE_THRESHOLD).to(config.DEVICE)
 
         # test mode
         if self.config.MODE == 2:
@@ -49,7 +50,7 @@ class EdgeConnect():
             self.debug = True
 
         self.log_file = os.path.join(config.PATH, 'log_' + model_name + '.dat')
-        self.writer = SummaryWriter(log_dir='ffhq_logs')
+        self.writer = SummaryWriter(log_dir=config.DATASET_NAME + '_logs')
 
     def load(self):
         if self.config.MODEL == 1:
@@ -107,8 +108,10 @@ class EdgeConnect():
 
                     # metrics
                     precision, recall = self.edgeacc(edges * masks, outputs * masks)
+                    cov = self.cov(edges * masks, outputs * masks)
                     logs.append(('precision', precision.item()))
                     logs.append(('recall', recall.item()))
+                    logs.append(('cov', cov.item()))
                     # backward
                     self.edge_model.backward(gen_loss, dis_loss)
                     iteration = self.edge_model.iteration
