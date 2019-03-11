@@ -1,12 +1,13 @@
 import os
 import numpy as np
-import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from .dataset import Dataset
 from .models import EdgeModel, InpaintingModel
 from .utils import Progbar, create_dir, stitch_images, imsave
 from .metrics import PSNR, EdgeAccuracy
+import torch
+from tensorboardX import SummaryWriter
 
 
 class EdgeConnect():
@@ -48,6 +49,7 @@ class EdgeConnect():
             self.debug = True
 
         self.log_file = os.path.join(config.PATH, 'log_' + model_name + '.dat')
+        self.writer = SummaryWriter(log_dir='ffhq_logs')
 
     def load(self):
         if self.config.MODEL == 1:
@@ -107,11 +109,9 @@ class EdgeConnect():
                     precision, recall = self.edgeacc(edges * masks, outputs * masks)
                     logs.append(('precision', precision.item()))
                     logs.append(('recall', recall.item()))
-
                     # backward
                     self.edge_model.backward(gen_loss, dis_loss)
                     iteration = self.edge_model.iteration
-
 
                 # inpaint model
                 elif model == 2:
@@ -172,14 +172,22 @@ class EdgeConnect():
                     logs = e_logs + i_logs
 
                     # backward
-                    self.inpaint_model.backward(i_gen_loss, i_dis_loss)
-                    self.edge_model.backward(e_gen_loss, e_dis_loss)
+                    self.inpaint_model.backward(i_gen_loss, i_dis_loss, retain_graph=True)
+                    self.edge_model.backward(e_gen_loss, e_dis_loss, retain_graph=False)
                     iteration = self.inpaint_model.iteration
 
 
                 if iteration >= max_iteration:
                     keep_training = False
                     break
+
+
+                # visualization
+                for item in logs:
+                    if item[0].startswith('l_'):
+                        self.writer.add_scalar('gan_losses/' + item[0], item[1], iteration)
+                    else:
+                        self.writer.add_scalar('other_losses/' + item[0], item[1], iteration)
 
                 logs = [
                     ("epoch", epoch),
@@ -194,7 +202,7 @@ class EdgeConnect():
 
                 # sample model at checkpoints
                 if self.config.SAMPLE_INTERVAL and iteration % self.config.SAMPLE_INTERVAL == 0:
-                    self.sample()
+                    self.sample(it=iteration)
 
                 # evaluate model at checkpoints
                 if self.config.EVAL_INTERVAL and iteration % self.config.EVAL_INTERVAL == 0:
@@ -205,6 +213,7 @@ class EdgeConnect():
                 if self.config.SAVE_INTERVAL and iteration % self.config.SAVE_INTERVAL == 0:
                     self.save()
 
+        self.writer.close()
         print('\nEnd training....')
 
     def eval(self):
@@ -286,7 +295,6 @@ class EdgeConnect():
                 i_logs.append(('mae', mae.item()))
                 logs = e_logs + i_logs
 
-
             logs = [("it", iteration), ] + logs
             progbar.add(len(images), values=logs)
 
@@ -331,16 +339,18 @@ class EdgeConnect():
             imsave(output, path)
 
             if self.debug:
+                img = self.postprocess(images)[0]
                 edges = self.postprocess(1 - edges)[0]
                 masked = self.postprocess(images * (1 - masks) + masks)[0]
                 fname, fext = name.split('.')
 
+                imsave(img, os.path.join(self.results_path, fname + '_ini.' + fext))
                 imsave(edges, os.path.join(self.results_path, fname + '_edge.' + fext))
                 imsave(masked, os.path.join(self.results_path, fname + '_masked.' + fext))
 
         print('\nEnd test....')
 
-    def sample(self, it=None):
+    def sample(self, it=None, writer=None):
         self.edge_model.eval()
         self.inpaint_model.eval()
 
@@ -384,15 +394,17 @@ class EdgeConnect():
             self.postprocess(edges),
             self.postprocess(outputs),
             self.postprocess(outputs_merged), 
-            img_per_row = image_per_row
+            img_per_row=image_per_row
         )
 
-
+        #viz_img = [images, inputs, edges, outputs, outputs_merged]
+        #writer.add_image('val_images', torch.cat(viz_img, 2), iteration)
         path = os.path.join(self.samples_path, self.model_name)
         name = os.path.join(path, str(iteration).zfill(5) + ".png")
         create_dir(path)
         print('\nsaving sample ' + name)
         images.save(name)
+
 
     def log(self, logs):
         with open(self.log_file, 'a') as f:

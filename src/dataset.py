@@ -10,7 +10,7 @@ from PIL import Image
 from scipy.misc import imread
 from scipy import ndimage
 from skimage.feature import canny
-from skimage.color import rgb2gray
+from skimage.color import rgb2gray, gray2rgb
 from .utils import create_mask
 
 
