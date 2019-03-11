@@ -168,6 +168,8 @@ class EdgeConnect():
                     psnr = self.psnr(self.postprocess(images), self.postprocess(outputs_merged))
                     mae = (torch.sum(torch.abs(images - outputs_merged)) / torch.sum(images)).float()
                     precision, recall = self.edgeacc(edges * masks, e_outputs * masks)
+                    cov = self.cov(edges * masks, e_outputs * masks)
+                    e_logs.append(('cov', cov.item()))
                     e_logs.append(('pre', precision.item()))
                     e_logs.append(('rec', recall.item()))
                     i_logs.append(('psnr', psnr.item()))
@@ -247,6 +249,8 @@ class EdgeConnect():
 
                 # metrics
                 precision, recall = self.edgeacc(edges * masks, outputs * masks)
+                cov = self.cov(edges * masks, outputs * masks)
+                logs.append(('cov', cov.item()))
                 logs.append(('precision', precision.item()))
                 logs.append(('recall', recall.item()))
 
@@ -292,6 +296,8 @@ class EdgeConnect():
                 psnr = self.psnr(self.postprocess(images), self.postprocess(outputs_merged))
                 mae = (torch.sum(torch.abs(images - outputs_merged)) / torch.sum(images)).float()
                 precision, recall = self.edgeacc(edges * masks, e_outputs * masks)
+                cov = self.cov(edges * masks, e_outputs * masks)
+                e_logs.append(('cov', cov.item()))
                 e_logs.append(('pre', precision.item()))
                 e_logs.append(('rec', recall.item()))
                 i_logs.append(('psnr', psnr.item()))

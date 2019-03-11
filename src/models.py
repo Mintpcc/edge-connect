@@ -139,8 +139,8 @@ class EdgeModel(BaseModel):
     def forward(self, images, edges, masks):
         edges_masked = (edges * (1 - masks))
         images_masked = (images * (1 - masks)) + masks
-        inputs = torch.cat((images_masked, edges_masked, masks), dim=1)
-        outputs = self.generator(inputs)  # in: [grayscale(1) + edge(1) + mask(1)]
+        inputs = torch.cat((images_masked, edges_masked), dim=1)
+        outputs = self.generator(inputs, torch.cat([1 - masks, 1 - masks], 1))  # in: [grayscale(1) + edge(1) + mask(1)]
         return outputs
 
     def backward(self, gen_loss=None, dis_loss=None, retain_graph=None):
