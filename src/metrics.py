@@ -59,9 +59,12 @@ class COV(nn.Module):
         mean_label = torch.mean(labels)
         mean_outputs = torch.mean(outputs)
 
+        if mean_label == 0 and mean_outputs == 0:
+            return 1
+
         img_a = labels - mean_label
         img_b = outputs - mean_outputs
         cov_value = torch.sum(torch.mul(img_a, img_b)) / (
-        torch.sqrt(torch.sum(torch.mul(img_a, img_a)) * torch.sum(torch.mul(img_b, img_b))))
+        torch.sqrt(torch.sum(torch.mul(img_a, img_a)) * torch.sum(torch.mul(img_b, img_b))) + 1e-8)
 
         return cov_value
