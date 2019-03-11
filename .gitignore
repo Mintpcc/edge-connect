@@ -106,5 +106,7 @@ ENV/
 .todo
 results/
 checkpoints/
+!*.yml
 data/
 *.zip
+*_logs/
