@@ -43,6 +43,17 @@ class AdversarialLoss(nn.Module):
             return loss
 
 
+class UnbanlancedL1Loss(nn.Module):
+    def __init__(self, threshold=0.5):
+        super(UnbanlancedL1Loss, self).__init__()
+        self.threshold = threshold
+
+    def __call__(self, inputs, outputs):
+        labels = (inputs > self.threshold) + 0.1 * (inputs <= self.threshold)
+        l1_loss = torch.abs(outputs - inputs)
+        return torch.sum(torch.mean(torch.mul(l1_loss.float(), labels.float()), dim=[1, 2, 3]))
+
+
 class StyleLoss(nn.Module):
     r"""
     Perceptual loss, VGG-based
@@ -77,7 +88,6 @@ class StyleLoss(nn.Module):
         return style_loss
 
 
-
 class PerceptualLoss(nn.Module):
     r"""
     Perceptual loss, VGG-based
@@ -102,9 +112,7 @@ class PerceptualLoss(nn.Module):
         content_loss += self.weights[3] * self.criterion(x_vgg['relu4_1'], y_vgg['relu4_1'])
         content_loss += self.weights[4] * self.criterion(x_vgg['relu5_1'], y_vgg['relu5_1'])
 
-
         return content_loss
-
 
 
 class VGG19(torch.nn.Module):
