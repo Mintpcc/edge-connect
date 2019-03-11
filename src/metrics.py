@@ -6,6 +6,7 @@ class EdgeAccuracy(nn.Module):
     """
     Measures the accuracy of the edge map
     """
+
     def __init__(self, threshold=0.5):
         super(EdgeAccuracy, self).__init__()
         self.threshold = threshold
@@ -39,8 +40,28 @@ class PSNR(nn.Module):
 
     def __call__(self, a, b):
         mse = torch.mean((a.float() - b.float()) ** 2)
-    
+
         if mse == 0:
             return 0
 
         return self.max_val - 10 * torch.log(mse) / self.base10
+
+
+class COV(nn.Module):
+    def __init__(self, threshold=0.5):
+        super(COV, self).__init__()
+        self.threshold = threshold
+
+    def __call__(self, inputs, outputs):
+        labels = (inputs > self.threshold).float()
+        outputs = (outputs > self.threshold).float()
+
+        mean_label = torch.mean(labels)
+        mean_outputs = torch.mean(outputs)
+
+        img_a = labels - mean_label
+        img_b = outputs - mean_outputs
+        cov_value = torch.sum(torch.mul(img_a, img_b)) / (
+        torch.sqrt(torch.sum(torch.mul(img_a, img_a)) * torch.sum(torch.mul(img_b, img_b))))
+
+        return cov_value
