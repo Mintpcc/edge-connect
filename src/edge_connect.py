@@ -223,6 +223,7 @@ class EdgeConnect():
         val_loader = DataLoader(
             dataset=self.val_dataset,
             batch_size=self.config.BATCH_SIZE,
+            num_workers=20,
             drop_last=True,
             shuffle=True
         )
