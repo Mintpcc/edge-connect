@@ -49,7 +49,7 @@ class UnbanlancedL1Loss(nn.Module):
         self.threshold = threshold
 
     def __call__(self, inputs, outputs):
-        labels = (inputs > self.threshold) + 0.5 * (inputs <= self.threshold)
+        labels = 5 * (inputs > self.threshold) + 1 * (inputs <= self.threshold)
         l1_loss = torch.abs(outputs - inputs)
         return torch.mean(torch.mul(l1_loss.float(), labels.float()))
 
