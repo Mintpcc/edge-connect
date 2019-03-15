@@ -51,7 +51,7 @@ class UnbanlancedL1Loss(nn.Module):
     def __call__(self, inputs, outputs):
         labels = (inputs > self.threshold) + 0.5 * (inputs <= self.threshold)
         l1_loss = torch.abs(outputs - inputs)
-        return torch.sum(torch.mean(torch.mul(l1_loss.float(), labels.float()), dim=[1, 2, 3]))
+        return torch.mean(torch.mul(l1_loss.float(), labels.float()))
 
 
 class StyleLoss(nn.Module):
